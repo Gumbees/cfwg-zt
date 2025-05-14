@@ -1,0 +1,14 @@
+[Unit]
+Description=Cloudflare Zero Trust WireGuard Manager for UDM-Pro
+After=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/local/bin/cfwg-zt
+Restart=on-failure
+RestartSec=10
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
