@@ -196,7 +196,7 @@ If you encounter issues:
 
 ## Requirements
 
-- Ubiquiti Dream Machine Pro (UDM-Pro)
+- Ubiquiti Dream Machine Pro (UDM-Pro) or UDM Pro Max
 - Cloudflare Zero Trust for Business account
 - Go 1.20+ for development
 

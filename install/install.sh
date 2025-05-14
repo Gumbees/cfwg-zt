@@ -16,15 +16,28 @@ if [ "$EUID" -ne 0 ]; then
   exit 1
 fi
 
-# Check if we're on a UDM-Pro
-if [ ! -f /usr/bin/ubnt-systool ] || ! grep -q "UDM-Pro" /etc/version; then
-  echo "Warning: This doesn't appear to be a UDM-Pro device."
-  echo "This application is specifically designed for UDM-Pro."
-  read -p "Continue anyway? (y/n): " -n 1 -r
-  echo
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    exit 1
+# Check if running on UDM Pro using the info command (most reliable method)
+UDM_MODEL=""
+if command -v info &> /dev/null; then
+  UDM_MODEL=$(info | grep -i "Model:" | grep -i "Dream Machine" || echo "")
+fi
+
+if [ -z "$UDM_MODEL" ]; then
+  # Fallback to older detection methods
+  if [ -f "/usr/bin/ubnt-systool" ] || [ -f "/etc/unifi-os" ] || [ -d "/mnt/data/unifi-os" ] || grep -qi "udm\|ubnt" /etc/os-release 2>/dev/null; then
+    echo "Detected UDM Pro using legacy identifiers."
+  else
+    echo "Warning: This might not be a UDM-Pro device."
+    echo "Common UDM Pro identifiers were not detected."
+    echo "This application is specifically designed for UDM-Pro."
+    read -p "Continue anyway? (y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      exit 1
+    fi
   fi
+else
+  echo "Detected: $UDM_MODEL"
 fi
 
 # Check if WireGuard is available

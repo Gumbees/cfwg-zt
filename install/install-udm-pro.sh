@@ -11,11 +11,25 @@ set -e
 echo "==== Cloudflare Zero Trust WireGuard Manager Installer for UDM Pro ===="
 echo
 
-# Check if running on UDM Pro
-if [ ! -f "/usr/bin/ubnt-systool" ]; then
-  echo "Error: This script is designed to run on a UDM Pro device."
-  echo "The required UDM Pro system tools were not detected."
-  exit 1
+# Check if running on UDM Pro using the info command (most reliable method)
+UDM_MODEL=""
+if command -v info &> /dev/null; then
+  UDM_MODEL=$(info | grep -i "Model:" | grep -i "Dream Machine" || echo "")
+fi
+
+if [ -z "$UDM_MODEL" ]; then
+  # Fallback to older detection methods
+  if [ -f "/usr/bin/ubnt-systool" ] || [ -f "/etc/unifi-os" ] || [ -d "/mnt/data/unifi-os" ] || grep -qi "udm\|ubnt" /etc/os-release 2>/dev/null; then
+    echo "Detected UDM Pro using legacy identifiers."
+  else
+    echo "Warning: This device might not be a UDM Pro."
+    echo "Common UDM Pro identifiers were not detected, but continuing anyway."
+    echo "If you're certain this is a UDM Pro, press Enter to continue."
+    echo "Otherwise, press Ctrl+C to cancel."
+    read -r
+  fi
+else
+  echo "Detected: $UDM_MODEL"
 fi
 
 # Create temporary directory
