@@ -1,4 +1,4 @@
-module github.com/nathanielsmith/cfwg-zt
+module github.com/gumbees/cfwg-zt
 
 go 1.20
 

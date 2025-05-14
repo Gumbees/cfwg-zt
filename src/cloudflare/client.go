@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/nathanielsmith/cfwg-zt/src/config"
+	"github.com/gumbees/cfwg-zt/src/config"
 )
 
 // Client handles interactions with the Cloudflare Zero Trust API

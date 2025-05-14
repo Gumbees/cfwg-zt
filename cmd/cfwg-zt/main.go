@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/nathanielsmith/cfwg-zt/src/config"
-	"github.com/nathanielsmith/cfwg-zt/src/cloudflare"
-	"github.com/nathanielsmith/cfwg-zt/src/wireguard"
-	"github.com/nathanielsmith/cfwg-zt/src/udm"
+	"github.com/gumbees/cfwg-zt/src/config"
+	"github.com/gumbees/cfwg-zt/src/cloudflare"
+	"github.com/gumbees/cfwg-zt/src/wireguard"
+	"github.com/gumbees/cfwg-zt/src/udm"
 	"github.com/spf13/viper"
 )
 

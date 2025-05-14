@@ -9,8 +9,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/nathanielsmith/cfwg-zt/src/cloudflare"
-	"github.com/nathanielsmith/cfwg-zt/src/config"
+	"github.com/gumbees/cfwg-zt/src/cloudflare"
+	"github.com/gumbees/cfwg-zt/src/config"
 )
 
 // Manager handles WireGuard configuration generation and management

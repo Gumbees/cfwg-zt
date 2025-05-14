@@ -2,7 +2,7 @@
 
 This application is designed to run on a Ubiquiti UDM-Pro device to maintain a WireGuard configuration authenticated to a Cloudflare Zero Trust for Business tenant. It works with a WireGuard configuration that you create in the UDM Pro UI and keeps it authenticated to Cloudflare Zero Trust.
 
-## Features
+## Enhancements
 
 - Runs on Ubiquiti UDM-Pro
 - Works with UDM Pro's built-in WireGuard UI configuration
@@ -122,7 +122,7 @@ If you encounter issues:
    systemctl status cfwg-zt
    ```d to run on a Ubiquiti UDM-Pro device to maintain a WireGuard configuration authenticated to a Cloudflare Zero Trust for Business tenant. This allows forwarding of all LAN traffic over a Cloudflare WARP tunnel.
 
-## Features
+## Enhancements
 
 - Runs on Ubiquiti UDM-Pro
 - Uses built-in WireGuard functionality
@@ -141,7 +141,7 @@ If you encounter issues:
 ### Quick Install
 ```bash
 # Download the latest release
-curl -L https://github.com/nathanielsmith/cfwg-zt/releases/latest/download/cfwg-zt.tar.gz -o cfwg-zt.tar.gz
+curl -L https://github.com/gumbees/cfwg-zt/releases/latest/download/cfwg-zt.tar.gz -o cfwg-zt.tar.gz
 
 # Extract the archive
 tar xzf cfwg-zt.tar.gz
@@ -161,7 +161,7 @@ systemctl enable cfwg-zt
 
 ### Manual Installation
 
-1. Download the latest release binary from the [releases page](https://github.com/nathanielsmith/cfwg-zt/releases)
+1. Download the latest release binary from the [releases page](https://github.com/gumbees/cfwg-zt/releases)
 2. Transfer it to your UDM-Pro using SCP or another file transfer method
 3. Make the binary executable: `chmod +x cfwg-zt`
 4. Move it to a suitable location: `mv cfwg-zt /usr/local/bin/`
