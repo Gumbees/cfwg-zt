@@ -122,3 +122,149 @@ debug: false
 
 	return nil
 }
+
+// RunWizard runs an interactive configuration wizard and returns the resulting config
+func RunWizard() (*Config, error) {
+	cfg := &Config{}
+
+	fmt.Println("==== Cloudflare Zero Trust WireGuard Manager Configuration Wizard ====")
+	fmt.Println()
+	fmt.Println("This wizard will help you set up your configuration.")
+	fmt.Println()
+
+	// Cloudflare Zero Trust settings
+	fmt.Println("==== Cloudflare Zero Trust Settings ====")
+	fmt.Println("You'll need to get these values from your Cloudflare Zero Trust dashboard.")
+	fmt.Println("Visit: https://dash.cloudflare.com/ and navigate to Zero Trust > Settings > Authentication")
+	fmt.Println()
+
+	fmt.Print("Enter your Cloudflare Account ID: ")
+	fmt.Scanln(&cfg.CloudflareZeroTrust.AccountID)
+
+	fmt.Print("Enter your Cloudflare Team Name: ")
+	fmt.Scanln(&cfg.CloudflareZeroTrust.TeamName)
+
+	fmt.Print("Enter your Cloudflare Client ID: ")
+	fmt.Scanln(&cfg.CloudflareZeroTrust.ClientID)
+
+	fmt.Print("Enter your Cloudflare Client Secret: ")
+	fmt.Scanln(&cfg.CloudflareZeroTrust.ClientSecret)
+	// WireGuard settings
+	fmt.Println()
+	fmt.Println("==== WireGuard Settings ====")
+	fmt.Println("These settings should match your UDM Pro WireGuard configuration.")
+	fmt.Println("Have you already created a WireGuard configuration in the UDM Pro UI?")
+	fmt.Println("If not, you can import the dummy configuration file at /etc/cfwg-zt/dummy-wireguard.conf")
+	fmt.Println("Go to UDM Pro UI: Settings > VPN > WireGuard > Create New > Import")
+	fmt.Println("The dummy configuration includes temporary keys that will be replaced automatically")
+	fmt.Println("and is pre-configured with the correct settings for Cloudflare Zero Trust.")
+	fmt.Println()
+
+	// Set default values
+	cfg.WireGuard.InterfaceName = "wg0"
+	cfg.WireGuard.ConfigPath = "/etc/wireguard/wg0.conf"
+	
+	fmt.Printf("Enter WireGuard interface name (default: %s): ", cfg.WireGuard.InterfaceName)
+	var input string
+	fmt.Scanln(&input)
+	if input != "" {
+		cfg.WireGuard.InterfaceName = input
+	}
+
+	fmt.Printf("Enter WireGuard config path (default: %s): ", cfg.WireGuard.ConfigPath)
+	input = ""
+	fmt.Scanln(&input)
+	if input != "" {
+		cfg.WireGuard.ConfigPath = input
+	}
+
+	// UDM Pro specific settings
+	fmt.Println()
+	fmt.Println("==== UDM Pro Settings ====")
+	fmt.Println()
+
+	// Set default values
+	cfg.UDMPro.WireGuardServiceName = "wg-quick@" + cfg.WireGuard.InterfaceName
+	cfg.UDMPro.ConfigBackupPath = "/etc/wireguard/backup"
+
+	fmt.Printf("Enter WireGuard service name (default: %s): ", cfg.UDMPro.WireGuardServiceName)
+	input = ""
+	fmt.Scanln(&input)
+	if input != "" {
+		cfg.UDMPro.WireGuardServiceName = input
+	}
+
+	fmt.Printf("Enter config backup path (default: %s): ", cfg.UDMPro.ConfigBackupPath)
+	input = ""
+	fmt.Scanln(&input)
+	if input != "" {
+		cfg.UDMPro.ConfigBackupPath = input
+	}
+
+	// General settings
+	fmt.Println()
+	fmt.Println("==== General Settings ====")
+	fmt.Println()
+
+	cfg.RefreshIntervalMinutes = 60
+	fmt.Printf("Enter configuration refresh interval in minutes (default: %d): ", cfg.RefreshIntervalMinutes)
+	var refreshInterval int
+	fmt.Scanln(&refreshInterval)
+	if refreshInterval > 0 {
+		cfg.RefreshIntervalMinutes = refreshInterval
+	}
+
+	cfg.Debug = false
+	fmt.Print("Enable debug mode? (y/n, default: n): ")
+	input = ""
+	fmt.Scanln(&input)
+	if input == "y" || input == "Y" {
+		cfg.Debug = true
+	}
+
+	fmt.Println()
+	fmt.Println("Configuration wizard complete!")
+
+	return cfg, nil
+}
+
+// SaveConfig saves the configuration to a file
+func SaveConfig(cfg *Config, path string) error {
+	// Create a new viper instance
+	v := viper.New()
+	v.SetConfigFile(path)
+	
+	// Set the values from the config struct
+	v.Set("cloudflare_zero_trust.client_id", cfg.CloudflareZeroTrust.ClientID)
+	v.Set("cloudflare_zero_trust.client_secret", cfg.CloudflareZeroTrust.ClientSecret)
+	v.Set("cloudflare_zero_trust.team_name", cfg.CloudflareZeroTrust.TeamName)
+	v.Set("cloudflare_zero_trust.account_id", cfg.CloudflareZeroTrust.AccountID)
+	
+	v.Set("wireguard.interface_name", cfg.WireGuard.InterfaceName)
+	v.Set("wireguard.config_path", cfg.WireGuard.ConfigPath)
+	
+	v.Set("udm_pro.wireguard_service_name", cfg.UDMPro.WireGuardServiceName)
+	v.Set("udm_pro.config_backup_path", cfg.UDMPro.ConfigBackupPath)
+	
+	v.Set("refresh_interval_minutes", cfg.RefreshIntervalMinutes)
+	v.Set("debug", cfg.Debug)
+	
+	// Create the directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+	
+	// Save the config file
+	if err := v.WriteConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found, write it
+			if err := v.SafeWriteConfig(); err != nil {
+				return fmt.Errorf("failed to write config file: %w", err)
+			}
+		} else {
+			return fmt.Errorf("failed to write config file: %w", err)
+		}
+	}
+	
+	return nil
+}

@@ -23,6 +23,45 @@ func NewManager(cfg *config.Config) *Manager {
 	return &Manager{config: cfg}
 }
 
+// ValidateConfig checks if the WireGuard configuration is properly set up for Cloudflare Zero Trust
+// This is especially useful for validating that the dummy configuration was properly imported
+func (m *Manager) ValidateConfig() (bool, error) {
+	configPath := m.config.WireGuard.ConfigPath
+	
+	// Check if the configuration file exists
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return false, fmt.Errorf("WireGuard configuration file not found at %s", configPath)
+	}
+	
+	// Read the configuration file
+	configData, err := os.ReadFile(configPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to read WireGuard configuration: %w", err)
+	}
+	
+	configContent := string(configData)
+	
+	// Check for required sections
+	if !strings.Contains(configContent, "[Interface]") {
+		return false, fmt.Errorf("WireGuard configuration is missing [Interface] section")
+	}
+	
+	if !strings.Contains(configContent, "[Peer]") {
+		return false, fmt.Errorf("WireGuard configuration is missing [Peer] section")
+	}
+	
+	// Check if it contains the dummy keys that need to be replaced
+	if strings.Contains(configContent, "mLmL+DB1n8MfA+7Dc+vnEdZD+VffR3Li3QcJhdTLuEU=") ||
+	   strings.Contains(configContent, "YOw/RK8gT3PR4ImRfpnfvJ8UTY3GfJlO6PcPbl40Tkw=") {
+		log.Println("WireGuard configuration contains dummy keys that need to be replaced")
+		log.Println("This is normal if you just imported the dummy configuration. Keys will be updated automatically.")
+		// Return true because even with dummy keys, the file structure is valid
+		return true, nil
+	}
+	
+	return true, nil
+}
+
 // UpdateConfig updates the WireGuard configuration file with the provided Cloudflare configuration
 // Only updates authentication-related fields while trying to preserve existing UDM Pro UI settings
 func (m *Manager) UpdateConfig(cfg *cloudflare.WireGuardConfig) error {

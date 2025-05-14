@@ -11,6 +11,48 @@ This application is designed to run on a Ubiquiti UDM-Pro device to maintain a W
 - Preserves your existing UDM Pro WireGuard settings
 - Compatible with UDM Pro's policy-based routing
 
+## Builds and Packages
+
+This repository includes pre-built binaries and deployment packages for different platforms:
+
+- **UDM-Pro (ARM64)**: `packages/cfwg-zt-udm-pro-arm64.tar.gz` - Complete deployment package for UDM-Pro
+- **Linux (x86-64)**: `packages/cfwg-zt-linux-amd64.tar.gz` - Complete deployment package for standard Linux distributions
+- **Windows (x86-64)**: `packages/cfwg-zt-windows-amd64.zip` - Windows executable with example configuration
+
+Raw binaries can be found in the `builds` directory.
+
+## Installation
+
+### One-Line Installer (Recommended for UDM Pro)
+
+To install with a single command on your UDM Pro:
+
+```bash
+curl -s https://raw.githubusercontent.com/gumbees/cfwg-zt/main/install/install-udm-pro.sh | bash
+```
+
+This installer will:
+1. Download the latest release package
+2. Install the application with all required files
+3. Set up the systemd service
+4. Offer to run the interactive configuration wizard
+
+### Manual Installation
+
+If you prefer manual installation, download the appropriate package from the releases section and follow these steps:
+
+1. Extract the package contents:
+   ```bash
+   # For UDM Pro
+   tar -xzf cfwg-zt-udm-pro-arm64.tar.gz
+   ```
+
+2. Run the installation script:
+   ```bash
+   chmod +x install.sh
+   ./install.sh
+   ```
+
 ## Usage
 
 The application provides several command-line options:
@@ -20,17 +62,47 @@ Usage:
   cfwg-zt [command]
 
 Available Commands:
-  help        Help about any command
-  setup       Set up a new configuration file
-  start       Start the service
-  status      Check the status of the WireGuard connection
-  version     Print the version number
+  config-wizard  Interactive configuration wizard
+  help           Help about any command
+  setup          Set up a new configuration file
+  start          Start the service
+  status         Check the status of the WireGuard connection
+  version        Print the version number
 
 Flags:
   -c, --config string   Path to config file (default is /etc/cfwg-zt/config.yaml)
   -d, --debug           Enable debug mode
   -h, --help            help for cfwg-zt
 ```
+
+### Interactive Configuration
+
+To set up your configuration interactively, use the config wizard:
+
+```bash
+cfwg-zt config-wizard
+```
+
+This will guide you through the configuration process step by step, asking for:
+
+- Cloudflare Zero Trust credentials
+- WireGuard interface settings
+- UDM Pro specific settings
+- General application settings
+
+The wizard will create a properly formatted configuration file that's ready to use.
+
+### Setting Up WireGuard in UDM Pro UI
+
+For this application to work, you need to create a WireGuard configuration in the UDM Pro UI first:
+
+1. Go to the UDM Pro UI: Settings > VPN > WireGuard
+2. Click "Create New WireGuard VPN"
+3. Click "Import" and select the dummy configuration from `/etc/cfwg-zt/dummy-wireguard.conf`
+   (This file is installed automatically by the one-line installer)
+4. Save the configuration
+
+The application will then manage the authentication with Cloudflare Zero Trust and keep the configuration up to date.
 
 ### Starting the Service
 
@@ -120,15 +192,7 @@ If you encounter issues:
    
    # Check systemd service status
    systemctl status cfwg-zt
-   ```d to run on a Ubiquiti UDM-Pro device to maintain a WireGuard configuration authenticated to a Cloudflare Zero Trust for Business tenant. This allows forwarding of all LAN traffic over a Cloudflare WARP tunnel.
-
-## Enhancements
-
-- Runs on Ubiquiti UDM-Pro
-- Uses built-in WireGuard functionality
-- Automatically authenticates with Cloudflare Zero Trust for Business
-- Manages WireGuard secrets and handles rotation
-- Forwards LAN traffic through Cloudflare WARP tunnel
+   ```
 
 ## Requirements
 
@@ -137,6 +201,21 @@ If you encounter issues:
 - Go 1.20+ for development
 
 ## Installation
+
+### One-Line Installer (Recommended for UDM Pro)
+
+To install with a single command on your UDM Pro:
+
+```bash
+curl -s https://raw.githubusercontent.com/gumbees/cfwg-zt/main/install/install-udm-pro.sh | bash
+```
+
+This will:
+1. Download the latest release package for UDM Pro
+2. Install the application and service
+3. Install a dummy WireGuard configuration you can import into the UDM Pro UI
+4. Offer to run the interactive configuration wizard
+5. Provide instructions for starting the service
 
 ### Quick Install
 ```bash
@@ -236,14 +315,35 @@ First, set up your WireGuard configuration through the UDM Pro UI:
 1. Log in to your UDM Pro admin interface (typically at https://192.168.1.1 or https://unifi)
 2. Navigate to Settings > VPN > WireGuard
 3. Click "Create New WireGuard VPN" button
-4. Configure the following settings:
-   - **Name**: Choose a name (e.g., "CloudflareZT")
+4. You can either:
+   - **Option A: Configure manually** with the settings below, OR
+   - **Option B: Import our dummy configuration** (RECOMMENDED) by clicking "Import" and selecting the `dummy-wireguard.conf` file included in the package
+
+#### Option B: Import the Dummy Configuration (Recommended)
+
+1. Click the "Import" button
+2. Select the `/etc/cfwg-zt/dummy-wireguard.conf` file 
+3. The dummy configuration contains:
+   - Temporary WireGuard keys that will be replaced automatically by the application
+   - Pre-configured address (100.64.0.1/32) and port settings (51820)
+   - Pre-configured DNS settings (1.1.1.1, 1.0.0.1) that you can modify in the UI
+   - Placeholder Cloudflare Zero Trust peer information with temporary keys
+   - MTU and other required parameters already set correctly
+4. After import, click "Add" to create the interface with the default settings
+5. The application will automatically replace the temporary keys with valid Cloudflare Zero Trust keys
+6. **Important**: Do not manually change keys in the configuration, as they will be automatically updated
+7. You can still customize UI settings like address, DNS servers, routing, and interface name
+
+#### Option A: Manual Configuration
+
+If you prefer to configure manually, use these settings:   - **Name**: Choose a name (e.g., "CloudflareZT")
    - **WireGuard Interface IPv4**: Enter a private IP address (e.g., "100.64.0.1/32")
    - **WireGuard Interface IPv6**: Leave blank or as default
    - **Listen Port**: Choose a port (e.g., 51820)
-   - **WireGuard Private Key**: Leave blank (will be replaced by the application)
+   - **DNS Servers**: Enter DNS servers (e.g., "1.1.1.1, 1.0.0.1")
+   - **WireGuard Private Key**: Enter a temporary key (will be replaced)
    - **Firewall**: Configure as needed for your network 
-   - **Peers**: Leave empty (will be configured by the application)
+   - **Peers**: Add a temporary peer with a public key (will be updated)
 
 5. Click "Add" to create the interface
 6. Make note of the interface name (e.g., "wg0") and its configuration path (typically "/etc/wireguard/wg0.conf")

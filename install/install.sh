@@ -60,6 +60,19 @@ echo "Installing application binary..."
 cp ./cfwg-zt /usr/local/bin/
 chmod +x /usr/local/bin/cfwg-zt
 
+# Copy the dummy WireGuard configuration for UDM Pro UI import
+if [ -f "./install/dummy-wireguard.conf" ]; then
+  echo "Installing dummy WireGuard configuration file..."
+  mkdir -p /etc/cfwg-zt
+  cp ./install/dummy-wireguard.conf /etc/cfwg-zt/
+  echo "The dummy WireGuard configuration has been installed to /etc/cfwg-zt/dummy-wireguard.conf"
+  echo "To use it:"
+  echo "1. Go to UDM Pro UI: Settings > VPN > WireGuard > Create New > Import"
+  echo "2. Select the file at /etc/cfwg-zt/dummy-wireguard.conf"
+  echo "3. Click 'Add' to create the interface"
+  echo "This configuration contains temporary keys that will be replaced by the application"
+fi
+
 # Create default config if it doesn't exist
 if [ ! -f /etc/cfwg-zt/config.yaml ]; then
   echo "Creating default configuration file..."
@@ -100,8 +113,12 @@ echo
 echo "Installation completed."
 echo
 echo "Next steps:"
-echo "1. Edit your configuration file at /etc/cfwg-zt/config.yaml"
-echo "2. Start the service with: systemctl start cfwg-zt"
-echo "3. Enable service at boot: systemctl enable cfwg-zt"
+echo "1. Create a WireGuard configuration in the UDM Pro UI"
+echo "   - Go to Settings > VPN > WireGuard"
+echo "   - Click 'Create New WireGuard VPN'"
+echo "   - For easy setup, click 'Import' and select the file at /etc/cfwg-zt/dummy-wireguard.conf"
+echo "2. Edit your configuration file at /etc/cfwg-zt/config.yaml"
+echo "3. Start the service with: systemctl start cfwg-zt"
+echo "4. Enable service at boot: systemctl enable cfwg-zt"
 echo
 echo "To view logs: journalctl -u cfwg-zt -f"

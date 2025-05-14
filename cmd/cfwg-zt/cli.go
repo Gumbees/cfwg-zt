@@ -9,7 +9,6 @@ import (
 	"github.com/gumbees/cfwg-zt/src/cloudflare"
 	"github.com/gumbees/cfwg-zt/src/config"
 	"github.com/gumbees/cfwg-zt/src/udm"
-	"github.com/gumbees/cfwg-zt/src/wireguard"
 	"github.com/spf13/cobra"
 )
 
@@ -33,6 +32,7 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(setupCmd)
+	rootCmd.AddCommand(configWizardCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 
@@ -145,6 +145,57 @@ var setupCmd = &cobra.Command{
 
 		fmt.Printf("Configuration file created at %s\n", configPath)
 		fmt.Println("Please edit this file to add your Cloudflare Zero Trust credentials")
+	},
+}
+
+// configWizardCmd creates a new configuration file interactively
+var configWizardCmd = &cobra.Command{
+	Use:   "config-wizard",
+	Short: "Interactive configuration wizard",
+	Long:  `Guides you through the process of creating a configuration file by asking questions interactively.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// Determine path for the config file
+		configPath := configFile
+		if configPath == "" {
+			configPath = "/etc/cfwg-zt/config.yaml"
+		}
+
+		// Check if config already exists
+		if _, err := os.Stat(configPath); err == nil {
+			fmt.Printf("Configuration file already exists at %s\n", configPath)
+			fmt.Println("Do you want to overwrite it? (y/n)")
+			var answer string
+			fmt.Scanln(&answer)
+			if answer != "y" && answer != "Y" {
+				fmt.Println("Config wizard aborted")
+				return
+			}
+		}
+
+		// Create the config directory if it doesn't exist
+		if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
+			log.Fatalf("Failed to create config directory: %v", err)
+		}
+
+		// Start the interactive configuration
+		cfg, err := config.RunWizard()
+		if err != nil {
+			log.Fatalf("Failed to complete configuration wizard: %v", err)
+		}
+
+		// Save the configuration
+		if err := config.SaveConfig(cfg, configPath); err != nil {
+			log.Fatalf("Failed to save configuration: %v", err)
+		}
+		fmt.Printf("Configuration file created at %s\n", configPath)
+		fmt.Println()
+		fmt.Println("Next steps:")
+		fmt.Println("1. Make sure you have a WireGuard configuration in your UDM Pro UI")
+		fmt.Println("   - If not, import the dummy configuration at /etc/cfwg-zt/dummy-wireguard.conf")
+		fmt.Println("   - Go to UDM Pro UI: Settings > VPN > WireGuard > Create New > Import")
+		fmt.Println("   - Select the file '/etc/cfwg-zt/dummy-wireguard.conf' and click 'Add'")
+		fmt.Println("   - The dummy configuration contains temporary keys and will be properly configured by the application")
+		fmt.Println("2. Start the service with: cfwg-zt start")
 	},
 }
 

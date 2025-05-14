@@ -1,0 +1,24 @@
+# Example configuration file for Cloudflare Zero Trust WireGuard Manager
+# This application maintains Cloudflare Zero Trust authentication for a UDM Pro UI-created WireGuard configuration
+
+# Cloudflare Zero Trust settings
+cloudflare_zero_trust:
+  client_id: "your_client_id_here"
+  client_secret: "your_client_secret_here"
+  team_name: "your_team_name_here"
+  account_id: "your_account_id_here"
+
+# WireGuard settings - these should match your UI-created configuration
+# You can find the interface name in the UDM Pro UI under Settings > VPN > WireGuard
+wireguard:
+  interface_name: "wg0"
+  config_path: "/etc/wireguard/wg0.conf"
+
+# UDM-Pro specific settings
+udm_pro:
+  wireguard_service_name: "wg-quick@wg0"  # Must match your interface name
+  config_backup_path: "/etc/wireguard/backup"
+
+# General settings
+refresh_interval_minutes: 60  # How often to refresh authentication
+debug: false

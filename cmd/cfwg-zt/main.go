@@ -107,6 +107,17 @@ func runService() {
 		done <- true
 	}()
 
+	// Validate the WireGuard configuration
+	log.Println("Validating WireGuard configuration...")
+	valid, err := wgManager.ValidateConfig()
+	if err != nil {
+		log.Printf("Warning: WireGuard configuration validation error: %v", err)
+		log.Println("This might happen if you've just imported the dummy configuration.")
+		log.Println("The application will attempt to fix this by updating with proper credentials.")
+	} else if valid {
+		log.Println("WireGuard configuration validation successful.")
+	}
+	
 	// Start the main service loop
 	log.Println("Starting main service loop...")
 	go func() {
@@ -182,9 +193,7 @@ func runService() {
 
 			// Reset consecutive failures counter after a successful run
 			consecutiveFailures = 0
-			log.Println("WireGuard configuration successfully updated and applied")
-
-			// Schedule a refresh of the device registration (to keep it active)
+			log.Println("WireGuard configuration successfully updated and applied")			// Schedule a refresh of the device registration (to keep it active)
 			refreshTime := time.Duration(cfg.RefreshIntervalMinutes) * time.Minute / 2
 			time.AfterFunc(refreshTime, func() {
 				if err := cfClient.RefreshDeviceRegistration(deviceToken); err != nil {
@@ -193,7 +202,7 @@ func runService() {
 					log.Println("Device registration refreshed successfully")
 				}
 			})
-
+			
 			// Sleep for the refresh interval from config
 			log.Printf("Next configuration check in %d minutes", cfg.RefreshIntervalMinutes)
 			time.Sleep(time.Duration(cfg.RefreshIntervalMinutes) * time.Minute)
@@ -201,5 +210,4 @@ func runService() {
 	}()
 	<-done
 	log.Println("Shutting down...")
-}
 }

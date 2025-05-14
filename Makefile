@@ -41,8 +41,13 @@ test:
 package: clean udm-pro
 	@echo "Creating release package..."
 	@mkdir -p $(BUILD_DIR)/release
-	@cp $(BUILD_DIR)/$(BINARY_NAME) $(BUILD_DIR)/release/
-	@cp -r install $(BUILD_DIR)/release/
+	@cp $(BUILD_DIR)/$(BINARY_NAME) $(BUILD_DIR)/release/	@cp -r install $(BUILD_DIR)/release/
 	@cp README.md $(BUILD_DIR)/release/
+	@chmod +x $(BUILD_DIR)/release/install/*.sh
+	@# Make sure the dummy WireGuard configuration is included for easy UDM Pro setup
+	@mkdir -p $(BUILD_DIR)/release/install
+	@cp install/dummy-wireguard.conf $(BUILD_DIR)/release/install/
+	@echo "# Included Files" > $(BUILD_DIR)/release/PACKAGE-CONTENTS.md
+	@echo "- dummy-wireguard.conf: Ready-to-import WireGuard configuration for UDM Pro UI" >> $(BUILD_DIR)/release/PACKAGE-CONTENTS.md
 	@cd $(BUILD_DIR) && tar -czvf $(BINARY_NAME)-$(VERSION).tar.gz -C release .
 	@echo "Package created: $(BUILD_DIR)/$(BINARY_NAME)-$(VERSION).tar.gz"

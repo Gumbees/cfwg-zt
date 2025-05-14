@@ -2,6 +2,18 @@
 
 This document provides instructions for setting up a development environment and working with this project.
 
+## Project Structure
+
+This project follows standard Go project layout with additional organization for build artifacts:
+
+- `/cmd` - Main applications (CLI and service implementation)
+- `/src` - Application packages
+- `/builds` - Output directory for compiled binaries
+- `/packages` - Output directory for distribution packages
+- `/install` - Installation scripts and service configuration
+
+Always build binaries into the `/builds` directory and create distribution packages in the `/packages` directory to maintain consistency across the project.
+
 ## Prerequisites
 
 - Go 1.20 or higher
@@ -24,6 +36,15 @@ This document provides instructions for setting up a development environment and
 ## Building the Application
 
 You can build the application on various platforms using the provided Makefile or manual Go commands.
+
+### Build Directory Standards
+
+Always follow these standards when building:
+
+1. Place compiled binaries in the `/builds` directory
+2. Name binaries with the target platform: `cfwg-zt-[os]-[arch]`
+3. Create distribution packages in the `/packages` directory
+4. Name packages with target platform: `cfwg-zt-[os]-[arch].tar.gz` or `cfwg-zt-[os]-[arch].zip`
 
 ### Building on Linux
 
@@ -55,36 +76,51 @@ On Windows, you can use the following PowerShell commands to build the applicati
 
 ```powershell
 # Build for your current platform (Windows)
-go build -o build/cfwg-zt.exe ./cmd/cfwg-zt
+go build -o builds/cfwg-zt.exe ./cmd/cfwg-zt
 
 # Build for UDM-Pro (Linux ARM64)
-$env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o build/cfwg-zt ./cmd/cfwg-zt
+$env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o builds/cfwg-zt ./cmd/cfwg-zt
 
 # Build for multiple platforms
 # For Linux ARM64 (UDM-Pro)
-$env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o build/cfwg-zt_linux_arm64 ./cmd/cfwg-zt
+$env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o builds/cfwg-zt-linux-arm64 ./cmd/cfwg-zt
 # For Linux AMD64
-$env:GOOS = "linux"; $env:GOARCH = "amd64"; go build -o build/cfwg-zt_linux_amd64 ./cmd/cfwg-zt
+$env:GOOS = "linux"; $env:GOARCH = "amd64"; go build -o builds/cfwg-zt-linux-amd64 ./cmd/cfwg-zt
+# For Windows AMD64
+$env:GOOS = "windows"; $env:GOARCH = "amd64"; go build -o builds/cfwg-zt-windows-amd64.exe ./cmd/cfwg-zt
 ```
 
 #### Creating a Release Package on Windows
 
 ```powershell
-# Create the build directory
-mkdir -p build/release
+# Create the packages directory
+New-Item -ItemType Directory -Path packages -Force
 
 # Build for UDM-Pro
-$env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o build/cfwg-zt ./cmd/cfwg-zt
+$env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o builds/cfwg-zt-linux-arm64 ./cmd/cfwg-zt
 
-# Copy files to the release directory
-Copy-Item build/cfwg-zt build/release/
-Copy-Item -Recurse install build/release/
-Copy-Item README.md build/release/
+# Create deployment package directory
+New-Item -ItemType Directory -Path deploy-temp -Force
+Copy-Item builds/cfwg-zt-linux-arm64 -Destination deploy-temp/cfwg-zt
+Copy-Item config.yaml.example -Destination deploy-temp/
+Copy-Item install/install.sh -Destination deploy-temp/
+Copy-Item install/cfwg-zt.service -Destination deploy-temp/
+
+# Create tarball (requires 7-Zip)
+$sevenZipPath = "$env:ProgramFiles\7-Zip\7z.exe"
+& $sevenZipPath a -ttar deploy-temp.tar ./deploy-temp/*
+& $sevenZipPath a -tgzip packages/cfwg-zt-udm-pro-arm64.tar.gz deploy-temp.tar
+
+# Clean up
+Remove-Item -Path deploy-temp -Recurse -Force
+Remove-Item deploy-temp.tar
+Copy-Item -Recurse install packages/release/
+Copy-Item README.md packages/release/
 
 # If you have 7-Zip installed
 # Create archive (requires 7-Zip)
-7z a -ttar build/cfwg-zt.tar build/release/*
-7z a -tgzip build/cfwg-zt.tar.gz build/cfwg-zt.tar
+7z a -ttar packages/cfwg-zt.tar packages/release/*
+7z a -tgzip packages/cfwg-zt.tar.gz packages/cfwg-zt.tar
 ```
 
 ## Docker Development Environment
@@ -99,16 +135,6 @@ cp config.yaml.example config.yaml
 # Run the application in Docker
 ./dev-run.sh
 ```
-
-## Project Structure
-
-- `cmd/cfwg-zt`: Main application entry point and CLI
-- `src/cloudflare`: Cloudflare Zero Trust API interactions
-- `src/wireguard`: WireGuard configuration management
-- `src/udm`: UDM-Pro specific functionality
-- `src/config`: Configuration handling
-- `install`: Installation scripts and service files
-- `.github/workflows`: CI/CD configuration
 
 ## Architecture
 
@@ -162,11 +188,11 @@ For Windows developers:
    ```
 6. Build for Windows (for local testing):
    ```powershell
-   go build -o build/cfwg-zt.exe ./cmd/cfwg-zt
+   go build -o builds/cfwg-zt.exe ./cmd/cfwg-zt
    ```
 7. Build for UDM Pro (Linux ARM64):
    ```powershell
-   $env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o build/cfwg-zt ./cmd/cfwg-zt
+   $env:GOOS = "linux"; $env:GOARCH = "arm64"; go build -o builds/cfwg-zt ./cmd/cfwg-zt
    ```
 
 ### Linux Development Environment
